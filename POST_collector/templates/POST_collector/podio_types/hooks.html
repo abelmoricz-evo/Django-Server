@@ -1,0 +1,29 @@
+
+{% extends "POST_collector/base.html" %}
+
+
+{% block title %} Podio Hooks Viewer{% endblock %}
+
+
+{% block content %}
+  <h1>Podio Hooks Viewer</h1>
+  
+  
+  <a class='p-1' href="{% url 'POST_collector:refresh_hooks'  %}">
+    <button class="btn btn-info">Refresh Hooks</button>
+  </a>
+  <a class='p-1' href="{% url 'POST_collector:refresh_applications'  %}">
+    <button class="btn btn-info">Refresh Applications</button>
+  </a>
+  <a class='p-1' href="{% url 'POST_collector:refresh_workspaces'  %}">
+    <button class="btn btn-info">Refresh Workspaces</button>
+  </a>
+
+
+  {% for hook in hooks %} 
+  <p>{{hook.app.type_of_application}} - {{hook.app.space.space_name}} - {{hook.app.app_name}} - {{hook.hook_type}}</p>
+
+
+  {% endfor %}
+
+  {% endblock %}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  
+    <link rel="stylesheet" href="https://cdn.jupyter.org/notebook/5.1.0/style/style.min.css">
+  </head>
+ 
+ 
+  <body class="rendered_html">
+    <div class="container my-3">
+      <div class="row">
+        <h3 class="col-sm-2 my-3">Team Podio Report Summary</h3> 
+        <div class="col">
+          <p>Active Items (excl. Done and Cancelled) are from now refered to as "items". Even when 'Done' and 'Cancelled' are listed their numbers are excluded form the 'ACTIVE ITEMS TOTAL'</p>
+          <p></p>
+          <a class="button" href="/standardized_view/download_all_items">Download all items</a>
+        </div>
+      </div>
+
+
+      <hr />
+
+      {{ df|safe }}
+
+      <hr />
+
+      <div class="row my-3">
+        <h3 class="col-sm-2">Column Definitions</h3>
+        <div class="col-sm-4">
+          <p><b>Team:</b></p>
+          <p><b>Name:</b> this is how your name is spelled in Podio</p>
+          <p><b>Items:</b> ACTIVE ITEMS which are items not Done and not Cancelled</p>
+        </div>
+        <div class="col-sm-4">
+          <p><b>2w old:</b> Items which have been edited/commented on more than 2 weeks ago</p>
+          <p><b>% > 2w old:</b> The ratio of 2w old / Items </p>
+          <p><b>AVG time since last edit:</b> all items have a date when they have been edited/commented on last and this is the average of that variable for active items</p>
+        </div>
+      </div>
+
+      
+      
+     
+      <div>
+        <table class="table table-light" >
+            <colgroup>
+              <col style="width: 15%" /> 
+              <col style="width: 15%" /> 
+              <col style="width: 5%" />
+              <col style="width: 5%" />
+              <col style="width: 5%" />
+              <col style="width: 8%" />
+              <col style="width: 8%" />
+              <col style="width: auto" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">Team</th>
+                <th scope="col">Name</th>
+                <th scope="col">Items (incl. On Hold)</th>
+                <th scope="col">2w old (excl. On Hold)</th>
+                
+                <th scope="col">On hold items</th>
+                <th scope="col">% > 2w old (excl. On Hold)</th>
+                <th scope="col">AVG time since last edit</th>
+                <th scope="col fs-6">Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for key, value in people_totals.items %}
+                    <tr>
+                      {% for v in value %}
+                        <td class="py-0">{{v}}</td>
+                      {% endfor %}
+                      <td style="font-size: 8pt;" class="py-0"><a href="{{key}}">{{key}}</a></td>
+                    </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+      </div>
+
+     
+
+    </div>
+
+
+  </body>
+  
+
+</html>

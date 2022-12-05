@@ -19,6 +19,9 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    path('POST_collector/', include('POST_collector.urls', namespace='POST_collector')),
+    path('standardized_view/', include('standardized_view.urls', namespace='standardized_view')),
+
     #
     path('accounts/', include('django.contrib.auth.urls')),
 ]

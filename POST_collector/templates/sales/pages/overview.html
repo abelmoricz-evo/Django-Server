@@ -1,0 +1,77 @@
+{% extends "sales/base.html" %}
+
+{% block TITLE %}
+  <h1>MASTERLIST</h1>
+{% endblock %}
+
+
+
+
+{% block OPPORTUNITIES %}
+  <div class="collapse" id="OPPORUNITIES">
+    <div class="card card-body">
+      {{OPPORTUNITIES | safe}}
+    </div>
+  </div>
+{% endblock %}
+
+{% block SALES_CALLS %}
+  <div class="collapse" id="SALES_CALLS">
+    <div class="card card-body">
+      <table class="table table-light" >
+        <colgroup>
+          <col style="width: 15%" /> 
+          <col style="width: 15%" /> 
+          <col style="width: auto" />
+          <col style="width: 18%" />
+          <col style="width: 18%" />
+          <col style="width: auto" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">Sales_call_date</th>
+            <th scope="col">Time since sales call</th>
+            <th scope="col">Title</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in SALES_CALLS %}
+                <tr>
+                  <th class="py-0">{{item.sales_call_date|date:'D d M Y'}}</th>
+                  <td class="py-0">{{item.sales_call_date|timesince}}</td>
+                  <td class="py-0"><a target="_blank" href="{{item.link}}">{{item.Title}} </a></td>
+                </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      
+    </div>
+  </div>
+{% endblock %}
+
+{% block ORGANIZATIONS %}
+  <div class="collapse" id="ORGANIZATIONS">
+    <div class="card card-body">
+      {{ORGANIZATIONS | safe}}
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block CONTACTS %}
+  <div class="collapse" id="CONTACTS">
+    <div class="card card-body">
+      {{CONTACTS | safe}}
+    </div>
+  </div>
+{% endblock %}
+
+{% block CONTACTS_ORGANIZATIONS %}
+  <div class="collapse" id="CONTACTS_ORGANIZATIONS">
+    <div class="card card-body">
+     {{CONTACTS_ORGANIZATIONS | safe}}
+    </div>
+  </div>
+
+{% endblock %}
