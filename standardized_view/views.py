@@ -22,19 +22,19 @@ def striphtml(data):
     p = re.compile(r'<.*?>')
     return p.sub('', data)
 
-
 def avg(dates):
   any_reference_date = now
   return (sum([any_reference_date-date for date in dates], datetime.timedelta()) / len(dates))
+
+
+
+
 
 
 @login_required
 @csrf_exempt
 def hello_page(request):
     context = {}
-
-    now = timezone.now()
-    print("NOW: " + str(now))
 
     workspaces = Podio_Workspace.objects.all().order_by('type_of_workspace')
     applications = Podio_Application.objects.all().order_by('type_of_application')
