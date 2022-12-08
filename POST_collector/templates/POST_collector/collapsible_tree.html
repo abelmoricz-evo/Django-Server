@@ -3,7 +3,7 @@
 <style>
   
 .Planned{
-    fill: blue;
+    fill: black;
 }
 .node {
   cursor: pointer;
@@ -31,8 +31,8 @@
 <script>
 
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
-    canvas_height = 700,
-    canvas_width = 960
+    canvas_height = window.innerHeight,
+    canvas_width = window.innerWidth,
     tree_width = canvas_width - margin.right - margin.left,
     tree_height = canvas_height - margin.top - margin.bottom,
     tree_level_depth = 180;
@@ -98,6 +98,7 @@ function update(source) {
       .attr("class", "node")
       .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
       .on("click", click)
+      
 
 
   new_nodes.append("circle")
