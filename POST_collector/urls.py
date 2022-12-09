@@ -9,6 +9,8 @@ app_name = 'POST_collector'
 urlpatterns = [
     # post views
     path('', views.hello_page, name='hello_page'),
+    path('old', views.hello_page_old, name='hello_page_old'),
+    
 
 
     path('hook_reciever', views.hook_reciever, name='hook_reciever'),

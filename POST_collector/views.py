@@ -141,6 +141,7 @@ def hello_page(request):
                                         'link', 'item_id', 'PARENT__item_id'))
     subprojects = projects.filter(app__app_name='Subprojects')
     tasks = projects.filter(app__app_name='Tasks')
+    todos = projects.filter(app__app_name='ToDos')
 
     print(type(projects))
     for wsp in wsps.distinct():
@@ -159,28 +160,41 @@ def hello_page(request):
 
                 
 
-                        
-
-    
-             
-
-
-    #apps = (Podio_Application.objects.values('space__space_name', 'space__space_id', 'app_name'))
-    #for app in apps.distinct():
-    #    input_created_data['children'].append(
-    #        {"name":app['space__space_name'], "children":[]}
-    #    )
-                     
-
-
+    bottom_up = {"parent": "null", "name": "Organization", "children":[] }
 
     input_data = {"parent": "null", "name": "Project", "edge_name": "null", "children": [
         {"name": "NodeLvl1-0 (1)", "edge_name": "null", "children": []},
         {"name": "<a href='www.google.com'>NodeLvl1-1 (2)</a>", "edge_name": "null", "children": []},
     ]}
 
+
+    level = []
+    for t in todos:
+        print(t['Title_clean'])
+        level.append( {"name": t['Title_clean'], "link": t['link'], "PARENT__item_id": t['PARENT__item_id']} )
+    
+
+    level_1 = []
+    for ta in tasks:
+        print(ta['PARENT__item_id'])
+        print(ta['PARENT__item_id']) 
+        
+        children = []
+        for t in level:
+            if t['PARENT__item_id'] == ta['item_id']:
+                children.append(t)
+                level.pop(level.index(t))
+        
+        
+
+        level_1.append( {"name": ta['Title_clean'], "link": ta['link'], "children": children} )
+    if len(level):
+        level_1.append({"name": "NO Task", "link": "", "children": level})
+
+    bottom_up['children'] = level_1
+
     #input_data = json.dumps(input_data)
-    input_data = json.dumps(input_created_data)
+    input_data = json.dumps(bottom_up)
 
     return render(request, 'POST_collector/collapsible_tree.html', context={'json':input_data})
 
@@ -308,11 +322,11 @@ def hello_page_old(request):
     fig = fig.to_html()
 
     #return render(request, 'POST_collector/collapsible_tree.html', context={'json':data2})
-
+    applications = Podio_Application.objects.all().order_by('type_of_application')
     return render(request, 'POST_collector/base.html', 
                             context={   
                                         #'items':items,
-                                        #'apps':applications,
+                                        'apps':applications,
                                         #'wsps':workspaces,
                                         #'num_apps':num_active_applications,
                                         'fig':fig,
