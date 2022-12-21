@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-  
-.Planned{
-    fill: black;
-}
 .node {
   cursor: pointer;
 }
@@ -25,8 +21,28 @@
   stroke-width: 3px;
 }
 
+body{
+  background-color: whitesmoke;
+}
+
 </style>
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-ease@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-selection@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-timer@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-transition@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-drag@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-zoom@3"></script>
+</head>
+
 <body>
+
+
+
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script>
 
@@ -41,6 +57,7 @@ var i = 0,
     duration = 750,
     root;
 
+
 var tree = d3.layout.tree()
     .size([tree_height, tree_width]);
 
@@ -53,12 +70,14 @@ var svg = d3.select("body").append("svg")
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    
 
 
 //load data
 var json_data = JSON.parse('{{ json | escapejs }}')
 
 console.log(json_data)
+console.log("some")
 
 d3.json(json_data, function(error, tree_data) {
   root = json_data;
@@ -100,9 +119,7 @@ function update(source) {
       .on("click", click)
       
 
-
   new_nodes.append("circle")
-      .attr("r", 1e-6)
       .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
   new_nodes.append("text")
@@ -110,9 +127,9 @@ function update(source) {
       .attr("dy", ".35em")
       .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
       .text(function(d) { return d.name; })
-      .style("fill-opacity", 1e-6)
-      .attr("class", "Planned")
       .on("click", function(d) { window.open(d.link); })
+      .attr("class", "Planned")
+
 
   // Transition nodes to their new position.
   var moved_node = node.transition().duration(duration)
@@ -137,8 +154,7 @@ function update(source) {
   // Update the links…
   var link = svg.selectAll("path.link")
       .data(links, function(d) { return d.target.id; });
-
-
+ 
   // Enter any new links at the parent's previous position.
   link.enter().insert("path", "g")
       .attr("class", "link")
@@ -148,8 +164,6 @@ function update(source) {
       })
       .append("svg:title")
           .text(function(d, i) { return d.target.edge_name; });
-
-
 
   //Transition links to their new position.
   link.transition().duration(duration)

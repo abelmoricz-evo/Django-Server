@@ -134,69 +134,72 @@ def hook_reciever(request):
 
 
 def hello_page(request):
-
-    input_created_data = {"parent": "null", "name":"Organization", "children":[] }
-    wsps = (Podio_Workspace.objects.values('space_name', 'space_id', 'link', 'type_of_workspace'))
-    projects = (Podio_Item.objects.values('app__space__space_id','app__space__space_name', 'app__app_name', 'Title_clean', 
-                                        'link', 'item_id', 'PARENT__item_id'))
+    projects = (Podio_Item.objects.values('app__space__space_id','app__space__space_name', 'app__app_name', 'Title_clean', 'link', 'item_id', 'PARENT__item_id'))
     subprojects = projects.filter(app__app_name='Subprojects')
     tasks = projects.filter(app__app_name='Tasks')
     todos = projects.filter(app__app_name='ToDos')
-
-    print(type(projects))
-    for wsp in wsps.distinct():
-        if wsp['type_of_workspace'] == 'standard':
-            input_created_data['children'].append(
-                {"children":[], "name":wsp['space_name'], "link":wsp['link'], }
-            )
-            #print(input_created_data)
-            
-            for p in projects:
-                if wsp['space_id'] == p['app__space__space_id'] and p['app__app_name']=="Projects":
-                    parent_node = list(filter(lambda person: person['name'] == p['app__space__space_name'], input_created_data['children']))[0]
-                    parent_node['children'].append(
-                        {"name":p['Title_clean'], "link":p['link'], "children":[], "item_id":p['item_id']}
-                    )
-
-                
+    todos = projects.filter(app__app_name='Projects')
 
     bottom_up = {"parent": "null", "name": "Organization", "children":[] }
-
-    input_data = {"parent": "null", "name": "Project", "edge_name": "null", "children": [
-        {"name": "NodeLvl1-0 (1)", "edge_name": "null", "children": []},
-        {"name": "<a href='www.google.com'>NodeLvl1-1 (2)</a>", "edge_name": "null", "children": []},
-    ]}
-
 
     level = []
     for t in todos:
         print(t['Title_clean'])
         level.append( {"name": t['Title_clean'], "link": t['link'], "PARENT__item_id": t['PARENT__item_id']} )
     
-
     level_1 = []
     for ta in tasks:
-        print(ta['PARENT__item_id'])
-        print(ta['PARENT__item_id']) 
-        
         children = []
         for t in level:
             if t['PARENT__item_id'] == ta['item_id']:
                 children.append(t)
                 level.pop(level.index(t))
-        
-        
-
-        level_1.append( {"name": ta['Title_clean'], "link": ta['link'], "children": children} )
+        level_1.append( {"name": ta['Title_clean'], "link": ta['link'], "PARENT__item_id": ta['PARENT__item_id'], "children": children} )
     if len(level):
-        level_1.append({"name": "NO Task", "link": "", "children": level})
+        level_1.append({"name": "NO Task", "link": "", "PARENT__item_id": ta['PARENT__item_id'], "children": level})
 
-    bottom_up['children'] = level_1
+    level_2 = []
+    for s in subprojects:
+        children = []
+        for ta in level_1:
+            if ta['PARENT__item_id'] == s['item_id']:
+                children.append(ta)
+                level_1.pop(level_1.index(ta))
+        level_2.append( {"name": s['Title_clean'], "link": s['link'], "PARENT__item_id": s['PARENT__item_id'], "children": children} )
+    if len(level):
+        level_2.append({"name": "NO Subproject", "link": "", "PARENT__item_id": s['PARENT__item_id'], "children": level_1})
 
-    #input_data = json.dumps(input_data)
+    
+    level_3 = []
+    for p in projects:
+        children = []
+        for s in level_2:
+            if s['PARENT__item_id'] == p['item_id']:
+                children.append(s)
+                level_2.pop(level_2.index(s))
+        level_3.append( {"name": p['Title_clean'], "link": p['link'], "children": children} )
+    if len(level):
+        level_3.append({"name": "NO Subproject", "link": "", "children": level_2})
+    
+
+    bottom_up['children'] = level_2
     input_data = json.dumps(bottom_up)
 
     return render(request, 'POST_collector/collapsible_tree.html', context={'json':input_data})
+
+def hello_new(request):
+    input_data = 0
+
+    json_data = open('POST_collector/flare-2.json')   
+    data1 = json.load(json_data) # deserialises it
+    data2 = json.dumps(data1) # json formatted string
+
+    print(data2)
+
+
+
+
+    return render(request, 'POST_collector/picture.html', context={'json':data2})
 
 @login_required
 @csrf_exempt

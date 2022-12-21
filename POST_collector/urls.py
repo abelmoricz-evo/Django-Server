@@ -10,6 +10,7 @@ urlpatterns = [
     # post views
     path('', views.hello_page, name='hello_page'),
     path('old', views.hello_page_old, name='hello_page_old'),
+    path('new', views.hello_new, name='hello_new'),
     
 
 
