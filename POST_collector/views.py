@@ -28,7 +28,6 @@ def striphtml(data):
     return p.sub('', data)
 
 
-
 def reload_PODIO_client():
     global Podio_client_counter
     Podio_client_counter += 1
@@ -40,6 +39,7 @@ def reload_PODIO_client():
 @csrf_exempt # defaults are for item update
 def add_item(request):
     print("Started adding item " + str(int(float(request.session['item_id']  ))))
+
     defaults = {}
     item_id = request.session['item_id']   
 
@@ -101,22 +101,30 @@ def add_item(request):
             return_podio_item.PARENT.clear()
             return_podio_item.PARENT.add(defaults['PARENT'])
         except: defaults['PARENT'] = "NO parent"
+
     redirect('POST_collector:hello_page')
 
 
 
 @csrf_exempt
 def hook_reciever(request):
+    request.session['item_id'] = request.POST['item_id']
+
+
     print("POST request raw: " + str(request.POST))
     if request.POST['type']=='hook.verify':
         PODIO_client.Hook.validate(request.POST['hook_id'], request.POST['code'])
-    elif request.POST['type']=='item.update' or request.POST['type']=='item.create':
-        request.session['item_id'] = request.POST['item_id']
+
+    elif request.POST['type']=='comment.create' or request.POST['type']=='comment.delete':
         add_item(request)
-        try:
-            print(PODIO_client.Item.update(int(request.POST['item_id']), attributes={'fields': {'podio-best-practices-app': 'https://podio.com/evologic-technologiescom/intranet/apps/podio-best-practices'}}))
-        except Exception as e:
-            print(e)
+
+    elif request.POST['type']=='item.update' or request.POST['type']=='item.create':
+        add_item(request)
+        
+        try: print(PODIO_client.Item.update(int(request.POST['item_id']), attributes={'fields': {'podio-best-practices-app': 'https://podio.com/evologic-technologiescom/intranet/apps/podio-best-practices'}}))
+        except Exception as e: print(e)
+
+
     elif request.POST['type']=='item.delete':
         try:
             query = Podio_Item.objects.get(pk=request.POST['item_id'])
@@ -125,21 +133,21 @@ def hook_reciever(request):
             query.delete()
         except Exception as e:
             print(e)
-    elif request.POST['type']=='comment.create' or request.POST['type']=='comment.delete':
-        request.session['item_id'] = request.POST['item_id']
-        add_item(request)
-    else:
-        print("UN CLASSIFIED WEBHOOK TYPE")
+
+    
+
     return HttpResponse("thanks")
 
 
 def hello_page(request):
-    projects = (Podio_Item.objects.values('app__space__space_id','app__space__space_name', 'app__app_name', 'Title_clean', 'link', 'item_id', 'PARENT__item_id'))
-    subprojects = projects.filter(app__app_name='Subprojects')
-    tasks = projects.filter(app__app_name='Tasks')
-    todos = projects.filter(app__app_name='ToDos')
-    todos = projects.filter(app__app_name='Projects')
+    raw_projects = (Podio_Item.objects.values('app__space__space_id','app__space__space_name', 'app__app_name', 'Title_clean', 'link', 'item_id', 'PARENT__item_id'))
+    projects = raw_projects.filter(app__app_name='Projects')
+    subprojects = raw_projects.filter(app__app_name='Subprojects')
+    tasks = raw_projects.filter(app__app_name='Tasks')
+    todos = raw_projects.filter(app__app_name='ToDos')
 
+    workspaces = Podio_Workspace.objects.values('space_name', 'link','space_id')
+    
     bottom_up = {"parent": "null", "name": "Organization", "children":[] }
 
     level = []
@@ -177,29 +185,30 @@ def hello_page(request):
             if s['PARENT__item_id'] == p['item_id']:
                 children.append(s)
                 level_2.pop(level_2.index(s))
-        level_3.append( {"name": p['Title_clean'], "link": p['link'], "children": children} )
+        level_3.append( {"name": p['Title_clean'], "wsp":p["app__space__space_id"], "link": p['link'], "children": children} )
     if len(level):
-        level_3.append({"name": "NO Subproject", "link": "", "children": level_2})
+        level_3.append({"name": "NO Project", "wsp":p["app__space__space_id"], "link": "", "children": level_2})
     
 
-    bottom_up['children'] = level_2
+    level_workspace = []
+    for wsp in workspaces:
+        children = []
+        for p in level_3:
+            if p['wsp'] == wsp['space_id']:
+                children.append(p)
+                level_3.pop(level_3.index(p))
+        level_workspace.append( {"name": wsp['space_name'], "link": wsp['link'], "children": children} )
+    if len(level):
+        level_workspace.append( {"name": "NO Workspace", "link": "", "children": children} )
+
+
+    bottom_up['children'] = level_workspace
     input_data = json.dumps(bottom_up)
 
     return render(request, 'POST_collector/collapsible_tree.html', context={'json':input_data})
 
-def hello_new(request):
-    input_data = 0
-
-    json_data = open('POST_collector/flare-2.json')   
-    data1 = json.load(json_data) # deserialises it
-    data2 = json.dumps(data1) # json formatted string
-
-    print(data2)
 
 
-
-
-    return render(request, 'POST_collector/picture.html', context={'json':data2})
 
 @login_required
 @csrf_exempt

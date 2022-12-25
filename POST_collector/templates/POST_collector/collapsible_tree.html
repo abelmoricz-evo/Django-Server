@@ -28,7 +28,7 @@ body{
 </style>
 
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-ease@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
@@ -47,7 +47,7 @@ body{
 <script>
 
 var margin = {top: 20, right: 120, bottom: 20, left: 120},
-    canvas_height = window.innerHeight,
+    canvas_height = 1.5 * window.innerHeight,
     canvas_width = window.innerWidth,
     tree_width = canvas_width - margin.right - margin.left,
     tree_height = canvas_height - margin.top - margin.bottom,
@@ -72,12 +72,8 @@ var svg = d3.select("body").append("svg")
 
     
 
-
 //load data
 var json_data = JSON.parse('{{ json | escapejs }}')
-
-console.log(json_data)
-console.log("some")
 
 d3.json(json_data, function(error, tree_data) {
   root = json_data;
@@ -99,10 +95,8 @@ d3.json(json_data, function(error, tree_data) {
 d3.select(self.frameElement).style("height", "800px");
 
 function update(source) {
-
-  // Compute the new tree layout.
-  var nodes = tree.nodes(root),
-      links = tree.links(nodes);
+  var nodes = tree.nodes(root); // Compute the new tree layout.
+  var links = tree.links(nodes);
 
   // Normalize for fixed-depth.
   nodes.forEach(function(d) { d.y = d.depth * tree_level_depth; });
@@ -123,12 +117,14 @@ function update(source) {
       .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
 
   new_nodes.append("text")
-      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
-      .attr("dy", ".35em")
-      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+      //.attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("x", "0")
+      .attr("dy", "-8")
+      .attr("text-anchor", function(d) { return d.children || d._children ? "middle" : "middle"; })
       .text(function(d) { return d.name; })
       .on("click", function(d) { window.open(d.link); })
       .attr("class", "Planned")
+      
 
 
   // Transition nodes to their new position.
@@ -137,8 +133,7 @@ function update(source) {
   moved_node.select("circle")
       .attr("r", 4.5)
       .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
-  moved_node.select("text")
-      .style("fill-opacity", 1);
+
 
 
   // Transition exiting nodes to the parent's new position.
