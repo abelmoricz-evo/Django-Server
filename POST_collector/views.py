@@ -210,142 +210,6 @@ def hello_page(request):
 
 
 
-@login_required
-@csrf_exempt
-def hello_page_old(request):
-
-    merged = pd.DataFrame()
-
-
-    df_rows = []
-    apps = (Podio_Application.objects.values('space__space_name', 'space__space_id', 'app_name'))
-    for app in apps:
-        if app['app_name'] == 'Projects':
-            df_rows.append({    
-                            'wsp': app['space__space_name'],
-                            'wsp_id': app['space__space_id'],
-                            })
-    df = pd.DataFrame(df_rows)
-    df.to_excel('df.xlsx', index=False)
-
-    
-
-    ddf_rows = []
-    for item in (Podio_Item.objects.values('app__space__space_id', 'Title_clean', 'item_id', 'Status', 'app__app_name', )):
-        if item['Status'] != 'Done' and item['Status'] != 'Cancelled' and item['app__app_name']=='Projects':
-            ddf_rows.append({   
-                            'wsp_id': item['app__space__space_id'], 
-                            'item': item['Title_clean'],
-                            'item_id': item['item_id'],
-                            'item_status': item['Status'],
-                            })
-    ddf = pd.DataFrame(ddf_rows)
-    ddf.to_excel('ddf.xlsx', index=False)
-
-    merged = pd.merge(df, ddf, on='wsp_id', how='outer')
-    
-    
-    dddf_rows = []
-    for item in (Podio_Item.objects.values('app__space__space_id', 'Title_clean', 'item_id', 'Status', 'app__app_name', 'PARENT__item_id')):
-        if item['Status'] != 'Done' and item['Status'] != 'Cancelled' and item['app__app_name']=='Subprojects':
-            dddf_rows.append({   
-                            'wsp_id': item['app__space__space_id'], 
-                            'item': item['Title_clean'],
-                            'item_id': item['item_id'],
-                            'item_status': item['Status'],
-                            'PARENT_id': item['PARENT__item_id'],
-                        })
-    dddf = pd.DataFrame(dddf_rows)
-    dddf.to_excel('dddf.xlsx', index=False)
-
-    merged = pd.merge(merged, dddf, left_on=['item_id', 'wsp_id'], right_on=['PARENT_id', 'wsp_id'], how='outer', suffixes=('_p','_s'))
-    
-
-    ddddf_rows = []
-    for item in (Podio_Item.objects.values('app__space__space_id', 'Title_clean', 'item_id', 'Status', 'app__app_name', 'PARENT__item_id')):
-        print(item)
-        if item['Status'] != 'Done' and item['Status'] != 'Cancelled' and item['app__app_name']=='Tasks':
-            ddddf_rows.append({ 
-                            'wsp_id': item['app__space__space_id'],  
-                            'item': item['Title_clean'],
-                            'item_id': item['item_id'],
-                            'item_status': item['Status'],
-                            'PARENT_id': item['PARENT__item_id'],
-                        })
-    ddddf = pd.DataFrame(ddddf_rows)
-    ddddf.to_excel('ddddf.xlsx', index=False)
-
-    merged = pd.merge(merged, ddddf, left_on=['item_id_s', 'wsp_id'], right_on=['PARENT_id', 'wsp_id'], suffixes=('_s','_t'))
-
-    dddddf_rows = []
-    for item in (Podio_Item.objects.values('app__space__space_id', 'Title_clean', 'item_id', 'Status', 'app__app_name', 'PARENT__item_id')):
-        print(item)
-        if item['Status'] != 'Done' and item['Status'] != 'Cancelled' and item['app__app_name']=='ToDos':
-            dddddf_rows.append({   
-                            'wsp_id': item['app__space__space_id'], 
-                            'item': item['Title_clean'],
-                            'item_id': item['item_id'],
-                            'item_status': item['Status'],
-                            'PARENT_id': item['PARENT__item_id'],
-                        })
-    dddddf = pd.DataFrame(dddddf_rows)
-    dddddf.to_excel('dddddf.xlsx', index=False)
-
-    merged = pd.merge(merged, dddddf, left_on=['item_id', 'wsp_id'], right_on=['PARENT_id', 'wsp_id'], suffixes=('_t','_d'))
-    
-    #with open('input_graph_tree.json') as f:
-    #json_data = open('/static/input_graph_tree.json')   
-    #data1 = json.load(json_data) # deserialises it
-    #data2 = json.dumps(data1) # json formatted string
-
-    #json_data.close()
-
-
-    
-    merged.fillna("NO ITEM", inplace=True)
-    merged.to_excel('merged.xlsx')
-
-    fig = px.icicle(merged, path=['wsp','item_p', 'item_s', 'item_t', 'item_d'],
-                    height=700,
-                    color='item_status_d',
-                    color_discrete_map={    '(?)':'white', 
-                                            'NO Status': 'darkgrey',
-                                            'Planned': '#f1f1f1',
-                                            'New': '#faf0bf',
-                                            'Approved': '#a8dffd',
-                                            'In Progress': '#c3fcc2',
-                                            'On Hold': 'black',
-                                            'Revision': '#e0d0fd',
-                                            },
-                    hover_data=None,
-                    custom_data=['item_p', 'item_s', 'item_t', 'item_d'],
-                    )
-
-    fig.update_traces(
-    hovertemplate="<br>".join([
-        "P: %{customdata[0]}",
-        "S: %{customdata[1]}",
-        "T: %{customdata[2]}",
-        "TD: %{customdata[3]}",
-    ])
-)
-
-    
-    fig = fig.to_html()
-
-    #return render(request, 'POST_collector/collapsible_tree.html', context={'json':data2})
-    applications = Podio_Application.objects.all().order_by('type_of_application')
-    return render(request, 'POST_collector/base.html', 
-                            context={   
-                                        #'items':items,
-                                        'apps':applications,
-                                        #'wsps':workspaces,
-                                        #'num_apps':num_active_applications,
-                                        'fig':fig,
-                                    })
-
-
-
 # Redirect to hook_viewer
 @login_required
 @csrf_exempt
@@ -400,6 +264,8 @@ def refresh_applications(request):
     return redirect('POST_collector:hello_page')
 
 
+
+'''
 
 # without creating hooks
 @login_required
@@ -510,3 +376,4 @@ def refresh_current_items(request):
 
 
 
+'''
