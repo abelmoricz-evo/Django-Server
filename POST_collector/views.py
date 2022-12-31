@@ -9,18 +9,13 @@ import pandas as pd
 from .OLD_pypodio2 import api
 import datetime
 import re
-import time
 import json
-
-import plotly.express as px
-import plotly.graph_objects as go
 
 
 env = environ.Env()
 environ.Env.read_env()
 PODIO_client = api.OAuthClient( env('PODIO_CLIENT_ID'),env('PODIO_CLIENT_SECRET'),env('PODIO_UN'),env('PODIO_PW') )
 Podio_client_counter = 0
-
 
 
 def striphtml(data):

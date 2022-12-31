@@ -66,11 +66,9 @@ class Podio_Item(models.Model):
     created_on = models.DateTimeField(blank=True,null=True)
     created_by = models.CharField(max_length=400, blank=True)
 
-
     # Abels fields for django organization
     last_updated_on_heroku = models.DateTimeField(auto_now=True)
     app = models.ForeignKey(Podio_Application, on_delete=models.CASCADE) # expresses one-to-many relationship
-
     
     #Standard fields
     Title = models.CharField(max_length=1600, blank=True) 
@@ -99,13 +97,6 @@ class Podio_Item(models.Model):
     
     PARENT = models.ManyToManyField('self', related_name='Parent', symmetrical=False)
 
-    #for sales stuff
-    '''
-    organization_sales = models.CharField(max_length=1600, blank=True) 
-    organization_id_sales = models.CharField(max_length=1600, blank=True) 
-    organization_ranking_sales = models.CharField(max_length=1600, blank=True) 
-    sales_call_date = models.DateTimeField(blank=True,null=True)
-    '''
 
     def __str__(self):
         return self.item_id + " -- " + self.Title + " -- " + self.Status + " -- " + self.link
