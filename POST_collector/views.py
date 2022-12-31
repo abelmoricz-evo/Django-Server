@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.views import View
+from django.views.generic.list import ListView
 
 from .models import  Podio_Item, Podio_Workspace, Podio_Application, Podio_Hook # , Post
 import environ
@@ -135,7 +137,8 @@ def hook_reciever(request):
 
 
 def hello_page(request):
-    raw_projects = (Podio_Item.objects.values('app__space__space_id','app__space__space_name', 'app__app_name', 'Title_clean', 'link', 'item_id', 'PARENT__item_id'))
+    raw_projects = (Podio_Item.objects.values('app__space__space_id','app__space__space_name', 'app__app_name', 'Title_clean', 'link', 'item_id', 'PARENT__item_id').filter(app__type_of_application='standard'))
+
     projects = raw_projects.filter(app__app_name='Projects')
     subprojects = raw_projects.filter(app__app_name='Subprojects')
     tasks = raw_projects.filter(app__app_name='Tasks')
@@ -202,7 +205,26 @@ def hello_page(request):
 
     return render(request, 'POST_collector/collapsible_tree.html', context={'json':input_data})
 
+class updates(View):
 
+    def get(self, request):
+        context = {}
+        
+        return render(request, 'POST_collector/data_management.html', context=context)
+
+
+
+class data_management(ListView):
+    model = Podio_Item
+    '''
+    def get(self, request):
+        context = {}
+
+        return render(request, 'POST_collector/data_management.html', context=context)
+
+    def post(self, request):
+        pass
+    '''
 
 
 # Redirect to hook_viewer

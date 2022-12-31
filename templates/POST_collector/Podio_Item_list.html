@@ -1,0 +1,26 @@
+
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">First</th>
+        <th scope="col">Last</th>
+        <th scope="col">Handle</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for object in object_list %}
+    <tr>
+        <td><a target="_blank" href="{{object.link}}">{{object.Title_clean}}</a></td>
+        <td>{{object.last_event_on | timesince }}</td>
+        <td>{{object.PARENT}}</td>
+      </tr>
+   
+    {% empty %}
+        <td>no objects</td>
+        <td>no objects</td>
+        <td>no objects</td>
+    {% endfor %}
+      
+
+    </tbody>
+  </table>
