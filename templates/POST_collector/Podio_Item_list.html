@@ -1,26 +1,41 @@
 
+
 <table class="table table-striped">
     <thead>
       <tr>
-        <th scope="col">First</th>
-        <th scope="col">Last</th>
-        <th scope="col">Handle</th>
+        <th scope="col">Wsp</th>
+        <th scope="col">App</th>
+        <th scope="col">Title_linked</th>
+        <th scope="col">Time since last event</th>
+        <th scope="col">PARENT</th>
+        <th scope="col">last upadated on railway</th>
       </tr>
     </thead>
     <tbody>
-    {% for object in object_list %}
-    <tr>
-        <td><a target="_blank" href="{{object.link}}">{{object.Title_clean}}</a></td>
-        <td>{{object.last_event_on | timesince }}</td>
-        <td>{{object.PARENT}}</td>
-      </tr>
-   
-    {% empty %}
-        <td>no objects</td>
-        <td>no objects</td>
-        <td>no objects</td>
-    {% endfor %}
-      
+    
+    
+        {% csrf_token %}
+
+        {% for object in object_list %}
+            <tr>
+                <td>{{object.app.space.space_name}}</td>
+                <td>{{object.app.app_name}}</td>
+                <td><a target="_blank" href="{{object.link}}">{{object.Title_clean}}</a></td>
+                <td>{{object.last_event_on | timesince }}</td>
+                <td>{{object.PARENT.first.Title_clean}}</td>
+                <td>{{object.last_updated_on_heroku | timesince }}</td>
+                <td>
+                    <a class="btn btn-sm p-0" href="/updates/{{ object.item_id }}">refresh</a>
+                </td>
+            </tr>
+
+        {% empty %}
+            <td>no objects</td>
+            <td>no objects</td>
+            <td>no objects</td>
+        {% endfor %}
+        
+    
 
     </tbody>
   </table>

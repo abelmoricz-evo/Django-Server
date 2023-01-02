@@ -95,11 +95,11 @@ class Podio_Item(models.Model):
     File_location = models.CharField(max_length=12800, blank=True) 
     old_podio_item_id = models.CharField(max_length=1600, blank=True) 
     
-    PARENT = models.ManyToManyField('self', related_name='Parent', symmetrical=False)
+    PARENT = models.ManyToManyField('self', blank=True)
 
 
     def __str__(self):
-        return self.item_id + " -- " + self.Title + " -- " + self.Status + " -- " + self.link
+        return self.item_id + " -- " + self.Title + " -- " + str(self.PARENT) + " -- " + self.link
 
 
 

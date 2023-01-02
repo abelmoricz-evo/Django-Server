@@ -35,11 +35,11 @@ def reload_PODIO_client():
 
 @csrf_exempt # defaults are for item update
 def add_item(request):
-    print("Started adding item " + str(int(float(request.session['item_id']  ))))
+    item_id = request.session['item_id']  
+
+    print("Started adding item " + str(int(float( item_id ))))
 
     defaults = {}
-    item_id = request.session['item_id']   
-
     global PODIO_client
 
     if 'PODIO_client' not in globals():
@@ -48,26 +48,25 @@ def add_item(request):
     item = ( PODIO_client.Item.find(int(float(item_id)), attributes={'limit':500}) )
 
     fields = pd.DataFrame(item['fields'])
- 
 
     items_total = PODIO_client.Item.filter(int(item['app']['app_id']),attributes={'limit':1, 'offset':0})['total']
-    Podio_Application.objects.update_or_create( app_id=item['app']['app_id'], defaults={'number_of_items':items_total})     
+    podio_application = Podio_Application.objects.update_or_create( app_id=item['app']['app_id'], defaults={'number_of_items':items_total})     
 
     defaults['app'] = Podio_Application.objects.get(pk=item['app']['app_id'])
     defaults['link'] = item['link']
     defaults['created_by'] = item['created_by']['name']
     defaults['last_event_on'] = item['last_event_on']
 
+
+    defaults['created_on'] = pd.to_datetime(item['created_on']) + datetime.timedelta(hours=2)
+    defaults['last_event_on'] = pd.to_datetime(item['last_event_on']) + datetime.timedelta(hours=2)
+    
     comments = item['comments']
     if len(comments):
         first_date = (comments[0]['created_on'])
         second_date = item['last_event_on']
         if first_date>second_date:
-            defaults['last_event_on'] = first_date
-    
-
-    defaults['created_on'] = pd.to_datetime(item['created_on']) + datetime.timedelta(hours=2)
-    defaults['last_event_on'] = pd.to_datetime(item['last_event_on']) + datetime.timedelta(hours=2)
+            defaults['last_event_on'] = pd.to_datetime(first_date) + datetime.timedelta(hours=2)
 
     for text_field in ['Title','Goal','Approach','Constraints and assumptions','Target result description','On-hold/cancellation reason', 'Problem Statement', 'Outcome', 'Notes','File location (Sharepoint/Server)','Podio Best Practices']:
         try:    defaults[text_field.replace(' (Sharepoint/Server)','').replace(' ','_').replace('-','_').replace('/','_')] = (fields[fields['label']==text_field]['values'].iloc[0][0]['value'])
@@ -76,7 +75,7 @@ def add_item(request):
     for date_field in ['Due Date','Start Date']:
         try:    defaults[date_field.replace(' ','_')] = (fields[fields['label']==date_field]['values'].iloc[0][0]['start'])
         except: defaults[date_field.replace(' ','_')] = datetime.datetime(2000,1,1)
-    #Team Add is incomplete
+
     for contact_field in ['Responsible','Accountable', 'Team']:
         try:    defaults[contact_field] = (fields[fields['label']==contact_field]['values'].iloc[0][0]['value']['name'])
         except: defaults[contact_field] = 'NO '+ contact_field
@@ -91,13 +90,19 @@ def add_item(request):
     try:    defaults['Title_clean'] = striphtml( fields[fields['label']=='Title']['values'].iloc[0][0]['value'] )
     except: defaults['Title_clean'] = 'NO '+ 'Title_clean'
 
-    if defaults['Status'] != 'Cancelled' or defaults['Status'] != 'Done':
-        return_podio_item, created = Podio_Item.objects.update_or_create(item_id=item_id, defaults=defaults)
-        try: 
-            defaults['PARENT'] = ( fields[fields['label']=='PARENT']['values'].iloc[0][0]['value']['item_id'] )
-            return_podio_item.PARENT.clear()
-            return_podio_item.PARENT.add(defaults['PARENT'])
-        except: defaults['PARENT'] = "NO parent"
+    
+    Podio_Item.objects.update_or_create(item_id=item_id, defaults=defaults)
+
+
+    try: 
+        parent_id = ( fields[fields['label']=='PARENT']['values'].iloc[0][0]['value']['item_id'] )
+        parent_objects = Podio_Item.objects.filter(item_id=parent_id)
+        child_object = Podio_Item.objects.get(item_id=item_id)
+        
+        child_object.PARENT.add(*parent_objects)
+        child_object.save()
+    except Exception as e: 
+        print(e)
 
     redirect('POST_collector:hello_page')
 
@@ -106,20 +111,10 @@ def add_item(request):
 @csrf_exempt
 def hook_reciever(request):
     request.session['item_id'] = request.POST['item_id']
-
-
     print("POST request raw: " + str(request.POST))
-    if request.POST['type']=='hook.verify':
-        PODIO_client.Hook.validate(request.POST['hook_id'], request.POST['code'])
 
-    elif request.POST['type']=='comment.create' or request.POST['type']=='comment.delete':
+    if request.POST['type']=='item.update' or request.POST['type']=='item.create' or request.POST['type']=='comment.create' or request.POST['type']=='comment.delete':
         add_item(request)
-
-    elif request.POST['type']=='item.update' or request.POST['type']=='item.create':
-        add_item(request)
-        
-        try: print(PODIO_client.Item.update(int(request.POST['item_id']), attributes={'fields': {'podio-best-practices-app': 'https://podio.com/evologic-technologiescom/intranet/apps/podio-best-practices'}}))
-        except Exception as e: print(e)
 
 
     elif request.POST['type']=='item.delete':
@@ -128,10 +123,10 @@ def hook_reciever(request):
             items_total = PODIO_client.Item.filter(int(query.app_id),attributes={'limit':1, 'offset':0})['total']
             Podio_Application.objects.update_or_create( app_id=query.app_id, defaults={'number_of_items':items_total})   
             query.delete()
+            
         except Exception as e:
             print(e)
 
-    
 
     return HttpResponse("thanks")
 
@@ -197,34 +192,41 @@ def hello_page(request):
                 level_3.pop(level_3.index(p))
         level_workspace.append( {"name": wsp['space_name'], "link": wsp['link'], "children": children} )
     if len(level):
-        level_workspace.append( {"name": "NO Workspace", "link": "", "children": children} )
+        level_workspace.append( {"name": "NO Workspace", "link": "", "children": level_3} )
 
 
     bottom_up['children'] = level_workspace
+
     input_data = json.dumps(bottom_up)
+
+    with open('data.json', 'w') as f:
+        json.dump(input_data, f)
 
     return render(request, 'POST_collector/collapsible_tree.html', context={'json':input_data})
 
+
+
+
+
 class updates(View):
 
-    def get(self, request):
-        context = {}
-        
-        return render(request, 'POST_collector/data_management.html', context=context)
+    def get(self, request, item_id):
+        request.session['item_id'] = item_id
+        add_item(request)
+
+        return redirect('POST_collector:data_management')
+
+    def post (self,request):
+        print("post reuqests")
+
+        return redirect('data_management')
 
 
 
 class data_management(ListView):
     model = Podio_Item
-    '''
-    def get(self, request):
-        context = {}
+    ordering = ['-last_updated_on_heroku']
 
-        return render(request, 'POST_collector/data_management.html', context=context)
-
-    def post(self, request):
-        pass
-    '''
 
 
 # Redirect to hook_viewer
